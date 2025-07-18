@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "229428674586",
+    "project_id": "restozen-s0k4r",
+    "storage_bucket": "restozen-s0k4r.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229428674586:android:4a4cb2ca42c581bcb191a3",
+        "android_client_info": {
+          "package_name": "com.example.resto_zen_administration"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD6owNjz2ZJsm-8AOWTOrEcXoJo7BCiQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
