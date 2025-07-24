@@ -12,7 +12,7 @@ import 'package:open_file/open_file.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final String _appVersion = '1.0.2'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.0.3'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
