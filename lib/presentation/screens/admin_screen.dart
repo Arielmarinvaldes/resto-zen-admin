@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +44,27 @@ class _AdminScreenState extends State<AdminScreen> {
   };
 
   String t(String key) => _translations[_locale]?[key] ?? key;
+
+  IconData _getStarIcon(String? plan) {
+    switch (plan) {
+      case 'premium':
+        return Icons.star;
+      case 'pro':
+        return Icons.star_border;
+      default:
+        return Icons.star_border;
+    }
+  }
+
+  Color _getStarColor(String? plan) {
+    switch (plan) {
+      case 'premium':
+      case 'pro':
+        return Colors.amber;
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -339,13 +359,26 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    data["restaurantName"] ?? "Sin nombre",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: _isDarkMode ? Colors.white : const Color(0xFF2F2F2F),
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          data["restaurantName"] ?? "Sin nombre",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: _isDarkMode ? Colors.white : const Color(0xFF2F2F2F),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        _getStarIcon(data["plan"]),
+                        size: 18,
+                        color: _getStarColor(data["plan"]),
+                      ),
+                    ],
                   ),
                 ),
                 if (!isCurrentUser)
@@ -364,12 +397,47 @@ class _AdminScreenState extends State<AdminScreen> {
                         final currentRole = data["role"] ?? "guest";
                         final newRole = currentRole == "admin" ? "guest" : "admin";
                         await restaurantsRef.doc(docId).update({"role": newRole});
+                      } else if (value == "editPlan") {
+                        final selectedPlan = await showDialog<String>(
+                          context: context,
+                          builder: (ctx) {
+                            String? selected = data['plan'] ?? 'basic';
+                            return AlertDialog(
+                              title: const Text("Seleccionar Plan"),
+                              content: StatefulBuilder(
+                                builder: (context, setState) => Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: ['basic', 'pro', 'premium'].map((plan) {
+                                    return RadioListTile<String>(
+                                      title: Text(plan),
+                                      value: plan,
+                                      groupValue: selected,
+                                      onChanged: (value) {
+                                        setState(() => selected = value!);
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
+                                TextButton(onPressed: () => Navigator.pop(ctx, selected), child: const Text("Guardar")),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (selectedPlan != null && selectedPlan != data['plan']) {
+                          await restaurantsRef.doc(docId).update({"plan": selectedPlan});
+                        }
                       }
                     },
                     itemBuilder: (context) => [
                       PopupMenuItem(value: "approve", child: Text(t('approve'))),
                       PopupMenuItem(value: "reject", child: Text(t('reject'))),
                       PopupMenuItem(value: "toggleRole", child: Text(t('toggleRole'))),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(value: "editPlan", child: Text("Editar plan")),
                     ],
                   )
               ],
@@ -382,6 +450,11 @@ class _AdminScreenState extends State<AdminScreen> {
             const SizedBox(height: 2),
             Text(
               "Rol: ${_showSensitiveData ? (data["role"] ?? "guest") : "••••"}",
+              style: TextStyle(fontSize: 12, color: _isDarkMode ? Colors.white : const Color(0xFF6C6C6C)),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              "Plan: ${_showSensitiveData ? (data["plan"] ?? "basic") : "••••"}",
               style: TextStyle(fontSize: 12, color: _isDarkMode ? Colors.white : const Color(0xFF6C6C6C)),
             ),
             const SizedBox(height: 2),
