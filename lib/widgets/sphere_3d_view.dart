@@ -33,7 +33,8 @@ class _Sphere3DViewState extends State<Sphere3DView>
   void initState() {
     super.initState();
     points = _generatePoints(widget.pointCount);
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 30))
+    _controller =
+    AnimationController(vsync: this, duration: const Duration(seconds: 30))
       ..repeat();
 
     _controller.addListener(() {
@@ -108,111 +109,122 @@ class Sphere3DPainter extends CustomPainter {
     final radius = min(size.width, size.height) / 1.6;
     canvas.translate(size.width / 2, size.height / 1.2);
 
-    // Contadores para debug
-    int puntosVerdes = 0;
-    int puntosAzules = 0;
+    // Texto central RestoZen+
+    final textPainter = TextPainter(
+      text: const TextSpan(
+        text: 'RestoZen',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFFAFADBC),
+          shadows: [
+            Shadow(
+              blurRadius: 15,
+              color: Colors.black,
+              offset: Offset(1, 1),
+            )
+          ],
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    )..layout();
 
+    textPainter.paint(
+      canvas,
+      Offset(-textPainter.width / 2, -textPainter.height / 2),
+    );
+
+    // Puntos de la esfera
     for (int i = 0; i < points.length; i++) {
       final point = points[i];
 
       // Rotación en eje Z
-      final rotatedX = point.x * cos(rotationAngle) - point.z * sin(rotationAngle);
-      final rotatedZ = point.x * sin(rotationAngle) + point.z * cos(rotationAngle);
+      final rotatedX =
+          point.x * cos(rotationAngle) - point.z * sin(rotationAngle);
+      final rotatedZ =
+          point.x * sin(rotationAngle) + point.z * cos(rotationAngle);
 
       final screenX = rotatedX * radius;
       final screenY = point.y * radius;
 
       // Perspectiva (usada para tamaño y opacidad)
-      final perspective = (rotatedZ + 1) / 2;
+      final perspective = (1 - rotatedZ) / 2;
 
       final isHighlighted = highlightedIndices.contains(i);
       final position = Offset(screenX, screenY);
 
       if (isHighlighted) {
-        // ✨ ESTRELLAS VERDES BRILLANTES (sin cambios)
-        _drawGlowingStar(canvas, position, pointSize, perspective, rotationAngle + i);
-        puntosVerdes++;
+        _drawGlowingStar(
+            canvas, position, pointSize, perspective, rotationAngle + i);
       } else {
-        // 🔵 PUNTOS AZULES HERMOSOS
         final baseSize = pointSize * 1.2;
         final visualSize = baseSize * (0.8 + perspective * 0.4);
         _drawBeautifulBluePoint(canvas, position, visualSize);
-        puntosAzules++;
       }
     }
   }
 
-  // MÉTODO PARA PUNTOS MORADOS
   void _drawBeautifulBluePoint(Canvas canvas, Offset position, double size) {
-    // Resplandor morado fuerte
     final glowPaint = Paint()
       ..color = const Color(0xFF1F1C2C).withOpacity(0.25)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
     canvas.drawCircle(position, size * 1.8, glowPaint);
 
-    // Punto principal morado suave
     final mainPaint = Paint()
       ..color = const Color(0xFF928DAB)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(position, size, mainPaint);
 
-    // Centro morado más claro
     final centerPaint = Paint()
       ..color = const Color(0xFF928DAB).withOpacity(0.7)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(position, size * 0.5, centerPaint);
   }
 
-  // ✨ ESTRELLAS VERDES (sin cambios - mantiene el efecto actual)
-  void _drawGlowingStar(Canvas canvas, Offset position, double baseSize, double perspective, double individualRotation) {
-    final size = baseSize * (1.2 + perspective * 0.6);
+  void _drawGlowingStar(Canvas canvas, Offset position, double baseSize,
+      double perspective, double individualRotation) {
+    final size = baseSize * (0.8 + perspective * 1.9);
 
-    // 🌟 AURA EXTERIOR
     final outerGlowPaint = Paint()
       ..color = Colors.green.withOpacity(0.15)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
     canvas.drawCircle(position, size * 4, outerGlowPaint);
 
-    // 💚 RESPLANDOR MEDIO
     final midGlowPaint = Paint()
       ..color = Colors.green.withOpacity(0.3)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
     canvas.drawCircle(position, size * 2.5, midGlowPaint);
 
-    // ⭐ RESPLANDOR INTERNO
     final innerGlowPaint = Paint()
       ..color = Colors.green.withOpacity(0.6)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
     canvas.drawCircle(position, size * 1.5, innerGlowPaint);
 
-    // 🌟 NÚCLEO BRILLANTE
     final corePaint = Paint()
       ..color = Colors.green.withOpacity(1.0)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(position, size, corePaint);
 
-    // ✨ PUNTO CENTRAL SÚPER BRILLANTE
     final centerPaint = Paint()
       ..color = Colors.white.withOpacity(0.9)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(position, size * 0.4, centerPaint);
 
-    // 🌠 RAYOS DE ESTRELLA
     _drawStarRays(canvas, position, size, individualRotation);
   }
 
-  // ⭐ RAYOS DE ESTRELLA (sin cambios)
-  void _drawStarRays(Canvas canvas, Offset center, double size, double rotation) {
-    final rayPaint = Paint()
+  void _drawStarRays(
+      Canvas canvas, Offset center, double size, double rotation) {
+    final _ = Paint()
       ..color = Colors.green.withOpacity(0.7)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
 
-    // 4 rayos principales
     for (int i = 0; i < 4; i++) {
       final angle = (i * pi / 2) + rotation * 0.5;
       final rayLength = size * 2.5;
@@ -236,7 +248,6 @@ class Sphere3DPainter extends CustomPainter {
       );
     }
 
-    // 4 rayos secundarios
     for (int i = 0; i < 4; i++) {
       final angle = (i * pi / 2) + (pi / 4) + rotation * 0.3;
       final rayLength = size * 1.8;

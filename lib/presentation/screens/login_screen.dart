@@ -15,7 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:admin_restozen/widgets/sphere_3d_view.dart'; // Ajusta el path si es necesario
 
 
-final String _appVersion = '1.0.4'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.1.4'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,16 +46,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final indices = List.generate(snapshot.docs.length, (index) => index % 300)
           .toSet()
           .toList();
-      print("📋 Documentos encontrados: ${snapshot.docs.map((doc) => doc.id).toList()}");
       // ✅ CORRECCIÓN: Asignar 'indices' a 'highlightedIndices'
       setState(() {
         highlightedIndices = indices;
       });
-
-      // Ahora los logs mostrarán los datos correctos
-      print("🔍 Índices resaltados: $highlightedIndices");
-      print("Total: ${highlightedIndices.length}");
-
     } catch (e) {
       print('Error al cargar restaurantes: $e');
     }
@@ -637,209 +631,139 @@ class _LoginScreenState extends State<LoginScreen> {
       // o guardar el estado para mostrarlo más tarde
     }
   }
-
-  // MÉTODO ADICIONAL: Usar un servicio independiente para instalación
-  static Future<void> instalarApkSinContext(String filePath) async {
-    try {
-      print("🔄 === INSTALACIÓN SIN CONTEXT ===");
-
-      // Verificar archivo
-      final file = File(filePath);
-      if (!await file.exists()) {
-        print("❌ Archivo no existe: $filePath");
-        return;
-      }
-
-      // Intentar con OpenFile primero (más confiable)
-      final result = await OpenFile.open(
-        filePath,
-        type: 'application/vnd.android.package-archive',
-      );
-
-      if (result.type == ResultType.done) {
-        print("✅ Instalación iniciada con OpenFile");
-        return;
-      }
-
-      // Fallback con AndroidIntent
-      final AndroidIntent intent = AndroidIntent(
-        action: 'android.intent.action.VIEW',
-        data: 'file://$filePath',
-        type: 'application/vnd.android.package-archive',
-        flags: <int>[
-          Flag.FLAG_ACTIVITY_NEW_TASK,
-          Flag.FLAG_GRANT_READ_URI_PERMISSION,
-        ],
-      );
-
-      await intent.launch();
-      print("✅ Instalación iniciada con AndroidIntent");
-
-    } catch (e) {
-      print("❌ Error en instalación sin context: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SizedBox.expand(
-        child: Stack(
-          children: [
-            // Fondo con la esfera arriba
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SizedBox(
-                height: 250,
-                child: Sphere3DView(
-                  highlightedIndices: highlightedIndices,
-                  pointCount: 300,
-                  pointSize: 1.4,
-                ),
-              ),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF1F1C2C),
+                Color(0xFF928DAB),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-
-            // Capa oscura
-            Positioned.fill(
+          ),
+          child: Center(
+            child: SingleChildScrollView(
               child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.black.withOpacity(0.1),  // ✅ Reducido de 0.6 a 0.3
-                      Colors.black.withOpacity(0.85),  // ✅ Reducido de 0.85 a 0.6
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 6),
+                    )
+                  ],
                 ),
-              ),
-            ),
-
-            // Contenido centrado verticalmente pero más abajo
-            SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 140), // Separación desde arriba
-                  Expanded(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        child: Container(
-                          constraints: const BoxConstraints(maxWidth: 400),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                          margin: const EdgeInsets.symmetric(horizontal: 24),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF1F1C2C), Color(0xFF928DAB)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 10,
-                                offset: const Offset(0, 6),
-                              )
-                            ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 50), // Ajusta este valor según cuánto quieras subirla
+                      child: SizedBox(
+                        height: 80,
+                        child: Sphere3DView(
+                          highlightedIndices: highlightedIndices,
+                          pointCount: 300,
+                          pointSize: 1.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    const Text(
+                      "Administrador",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Acceso exclusivo para administradores",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+                    TextField(
+                      controller: emailCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: "Email",
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        filled: true,
+                        fillColor: Colors.white12,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passCtrl,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: "Contraseña",
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        filled: true,
+                        fillColor: Colors.white12,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          error!,
+                          style: const TextStyle(color: Colors.redAccent),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: loading ? null : login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.verified_user, color: Colors.white, size: 60),
-                              const SizedBox(height: 20),
-                              const Text(
-                                "RestoZen Admins",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                "Acceso exclusivo para administradores",
-                                style: TextStyle(color: Colors.white70, fontSize: 14),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 30),
-                              TextField(
-                                controller: emailCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: "Email",
-                                  labelStyle: const TextStyle(color: Colors.white70),
-                                  filled: true,
-                                  fillColor: Colors.white12,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              TextField(
-                                controller: passCtrl,
-                                obscureText: true,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: "Contraseña",
-                                  labelStyle: const TextStyle(color: Colors.white70),
-                                  filled: true,
-                                  fillColor: Colors.white12,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              if (error != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: Text(
-                                    error!,
-                                    style: const TextStyle(color: Colors.redAccent),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: loading ? null : login,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: loading
-                                      ? const CircularProgressIndicator(color: Colors.white)
-                                      : const Text(
-                                    "Entrar",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                "Tu acceso será registrado",
-                                style: TextStyle(color: Colors.white54, fontSize: 12),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                        ),
+                        child: loading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                          "Entrar",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Tu acceso será registrado",
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
