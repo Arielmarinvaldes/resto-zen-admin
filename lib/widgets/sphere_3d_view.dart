@@ -110,7 +110,7 @@ class Sphere3DPainter extends CustomPainter {
 
     // Contadores para debug
     int puntosVerdes = 0;
-    int puntosBlancos = 0;
+    int puntosAzules = 0;
 
     for (int i = 0; i < points.length; i++) {
       final point = points[i];
@@ -126,33 +126,138 @@ class Sphere3DPainter extends CustomPainter {
       final perspective = (rotatedZ + 1) / 2;
 
       final isHighlighted = highlightedIndices.contains(i);
+      final position = Offset(screenX, screenY);
 
-      // Colores más visibles para debug
-      final color = isHighlighted
-          ? Colors.green.withOpacity(0.9)  // Verde más visible
-          : Colors.black.withOpacity(0.7); // Blanco más visible
-
-      final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.fill;
-
-      // Tamaño ligeramente mayor para los puntos verdes
-      final baseSize = isHighlighted ? pointSize * 1.5 : pointSize;
-      final visualSize = baseSize * (0.5 + perspective);
-
-      canvas.drawCircle(Offset(screenX, screenY), visualSize, paint);
-
-      // Contar para debug
       if (isHighlighted) {
+        // ✨ ESTRELLAS VERDES BRILLANTES (sin cambios)
+        _drawGlowingStar(canvas, position, pointSize, perspective, rotationAngle + i);
         puntosVerdes++;
       } else {
-        puntosBlancos++;
+        // 🔵 PUNTOS AZULES HERMOSOS
+        final baseSize = pointSize * 1.2;
+        final visualSize = baseSize * (0.8 + perspective * 0.4);
+        _drawBeautifulBluePoint(canvas, position, visualSize);
+        puntosAzules++;
       }
     }
+  }
 
-    // Debug: imprimir contadores cada cierto tiempo
-    if (rotationAngle % (pi / 4) < 0.1) { // Cada 45 grados aproximadamente
-      print("🎨 Renderizado: $puntosVerdes verdes, $puntosBlancos blancos");
+  // MÉTODO PARA PUNTOS MORADOS
+  void _drawBeautifulBluePoint(Canvas canvas, Offset position, double size) {
+    // Resplandor morado fuerte
+    final glowPaint = Paint()
+      ..color = const Color(0xFF1F1C2C).withOpacity(0.25)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+    canvas.drawCircle(position, size * 1.8, glowPaint);
+
+    // Punto principal morado suave
+    final mainPaint = Paint()
+      ..color = const Color(0xFF928DAB)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(position, size, mainPaint);
+
+    // Centro morado más claro
+    final centerPaint = Paint()
+      ..color = const Color(0xFF928DAB).withOpacity(0.7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(position, size * 0.5, centerPaint);
+  }
+
+  // ✨ ESTRELLAS VERDES (sin cambios - mantiene el efecto actual)
+  void _drawGlowingStar(Canvas canvas, Offset position, double baseSize, double perspective, double individualRotation) {
+    final size = baseSize * (1.2 + perspective * 0.6);
+
+    // 🌟 AURA EXTERIOR
+    final outerGlowPaint = Paint()
+      ..color = Colors.green.withOpacity(0.15)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
+    canvas.drawCircle(position, size * 4, outerGlowPaint);
+
+    // 💚 RESPLANDOR MEDIO
+    final midGlowPaint = Paint()
+      ..color = Colors.green.withOpacity(0.3)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+    canvas.drawCircle(position, size * 2.5, midGlowPaint);
+
+    // ⭐ RESPLANDOR INTERNO
+    final innerGlowPaint = Paint()
+      ..color = Colors.green.withOpacity(0.6)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
+    canvas.drawCircle(position, size * 1.5, innerGlowPaint);
+
+    // 🌟 NÚCLEO BRILLANTE
+    final corePaint = Paint()
+      ..color = Colors.green.withOpacity(1.0)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(position, size, corePaint);
+
+    // ✨ PUNTO CENTRAL SÚPER BRILLANTE
+    final centerPaint = Paint()
+      ..color = Colors.white.withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(position, size * 0.4, centerPaint);
+
+    // 🌠 RAYOS DE ESTRELLA
+    _drawStarRays(canvas, position, size, individualRotation);
+  }
+
+  // ⭐ RAYOS DE ESTRELLA (sin cambios)
+  void _drawStarRays(Canvas canvas, Offset center, double size, double rotation) {
+    final rayPaint = Paint()
+      ..color = Colors.green.withOpacity(0.7)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
+
+    // 4 rayos principales
+    for (int i = 0; i < 4; i++) {
+      final angle = (i * pi / 2) + rotation * 0.5;
+      final rayLength = size * 2.5;
+      final rayWidth = size * 0.15;
+
+      final endX = center.dx + cos(angle) * rayLength;
+      final endY = center.dy + sin(angle) * rayLength;
+
+      final rayPath = Path();
+      rayPath.moveTo(center.dx, center.dy);
+      rayPath.lineTo(endX, endY);
+
+      canvas.drawPath(
+        rayPath,
+        Paint()
+          ..color = Colors.green.withOpacity(0.5)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = rayWidth
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
+      );
+    }
+
+    // 4 rayos secundarios
+    for (int i = 0; i < 4; i++) {
+      final angle = (i * pi / 2) + (pi / 4) + rotation * 0.3;
+      final rayLength = size * 1.8;
+      final rayWidth = size * 0.1;
+
+      final endX = center.dx + cos(angle) * rayLength;
+      final endY = center.dy + sin(angle) * rayLength;
+
+      final rayPath = Path();
+      rayPath.moveTo(center.dx, center.dy);
+      rayPath.lineTo(endX, endY);
+
+      canvas.drawPath(
+        rayPath,
+        Paint()
+          ..color = Colors.green.withOpacity(0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = rayWidth
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0),
+      );
     }
   }
 

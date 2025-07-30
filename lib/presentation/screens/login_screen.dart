@@ -15,7 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:admin_restozen/widgets/sphere_3d_view.dart'; // Ajusta el path si es necesario
 
 
-final String _appVersion = '1.0.3'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.0.4'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
