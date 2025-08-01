@@ -17,7 +17,7 @@ import 'package:admin_restozen/widgets/sphere_3d_view.dart';
 import '../../utils/version_checker_service.dart'; // Ajusta el path si es necesario
 
 
-final String _appVersion = '1.2.4'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.2.5'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -96,9 +96,25 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pushReplacementNamed('/admin');
     } on FirebaseAuthException catch (e) {
       setState(() {
-        error = e.message;
+        switch (e.code) {
+          case 'invalid-email':
+            error = 'El email no es válido.';
+            break;
+          case 'user-disabled':
+            error = 'Esta cuenta ha sido desactivada.';
+            break;
+          case 'user-not-found':
+            error = 'No se encontró una cuenta con este email.';
+            break;
+          case 'wrong-password':
+            error = 'La contraseña es incorrecta.';
+            break;
+          default:
+            error = 'Error de autenticación. Intenta nuevamente.';
+        }
       });
-    } finally {
+    }
+    finally {
       setState(() {
         loading = false;
       });
