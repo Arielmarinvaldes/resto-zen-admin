@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../utils/version_checker_service.dart';
+import '../../widgets/sphere_3d_view.dart';
+
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -13,6 +18,8 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _isDarkMode = false;
   String _locale = 'es';
   bool _showSensitiveData = true;
+  List<int> highlightedIndices = [];
+
 
   final Map<String, Map<String, String>> _translations = {
     'es': {
@@ -44,6 +51,51 @@ class _AdminScreenState extends State<AdminScreen> {
   };
 
   String t(String key) => _translations[_locale]?[key] ?? key;
+
+  @override
+  void initState() {
+    super.initState();
+    VersionCheckerService.startPeriodicCheck(context);
+    _loadPreferences();
+    Future.microtask(() async {
+      await _loadRestaurantIndices();
+    });
+  }
+
+  @override
+  void dispose() {
+    VersionCheckerService.stop();
+    super.dispose();
+  }
+
+  Future<void> _loadRestaurantIndices() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('restaurants').get();
+      final indices = List.generate(snapshot.docs.length, (index) => index % 300)
+          .toSet()
+          .toList();
+      // ✅ CORRECCIÓN: Asignar 'indices' a 'highlightedIndices'
+      setState(() {
+        highlightedIndices = indices;
+      });
+    } catch (e) {
+      print('Error al cargar restaurantes: $e');
+    }
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = prefs.getBool('darkMode') ?? false;
+      _locale = prefs.getString('locale') ?? 'es';
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', _isDarkMode);
+    await prefs.setString('locale', _locale);
+  }
 
   IconData _getStarIcon(String? plan) {
     switch (plan) {
@@ -171,64 +223,61 @@ class _AdminScreenState extends State<AdminScreen> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 50),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF1F1C2C),
-                    Color(0xFF928DAB),
-                  ],
+                  colors: [Color(0xFF1F1C2C), Color(0xFF928DAB)],
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        'assets/image/Admins_RestoZen.png',
-                        height: 56,
-                        width: 56,
-                        fit: BoxFit.contain,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 68,
+                    height: 58, // Aumenta un poco para permitir centrado vertical
+                    child: Center(
+                      child: Sphere3DView(
+                        pointCount: 300,
+                        pointSize: 1.0,
+                        highlightedIndices: highlightedIndices,
+                        nameTextSize: 14.0,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 1, top: 35), // << Aumentado top
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start, // << Cambiado de center
                         children: [
                           Text(
                             FirebaseAuth.instance.currentUser?.email ?? "Admin",
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4), // Más espacio si quieres
                           Text(
                             "Administrador",
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10,
                               color: Colors.white.withOpacity(0.9),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
-
-
             ),
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(0),
@@ -270,24 +319,14 @@ class _AdminScreenState extends State<AdminScreen> {
                             scale: 0.75,
                             child: Switch(
                               value: _isDarkMode,
-                              onChanged: (value) => setState(() => _isDarkMode = value),
+                              onChanged: (value) => setState(() {
+                                _isDarkMode = value;
+                                _savePreferences();
+                              }),
                               activeColor: Color(0xFF928DAB),
                             ),
                           ),
                         ),
-                        ListTile(
-                          leading: Icon(_showSensitiveData ? Icons.visibility : Icons.visibility_off),
-                          title: Text(_showSensitiveData ? t('hideData') : t('showData')),
-                          trailing: Transform.scale(
-                            scale: 0.75,
-                            child: Switch(
-                              value: _showSensitiveData,
-                              onChanged: (value) => setState(() => _showSensitiveData = value),
-                              activeColor: Color(0xFF928DAB),
-                            ),
-                          ),
-                        ),
-
                         const Divider(height: 30, thickness: 1),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),

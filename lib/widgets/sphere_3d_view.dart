@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-// Punto 3D simple
 class Point3D {
   final double x, y, z;
   Point3D(this.x, this.y, this.z);
@@ -11,12 +10,14 @@ class Sphere3DView extends StatefulWidget {
   final List<int> highlightedIndices;
   final int pointCount;
   final double pointSize;
+  final double nameTextSize;
 
   const Sphere3DView({
     Key? key,
     required this.highlightedIndices,
     this.pointCount = 300,
     this.pointSize = 2.0,
+    this.nameTextSize = 18.0, // tamaño por defecto
   }) : super(key: key);
 
   @override
@@ -33,8 +34,7 @@ class _Sphere3DViewState extends State<Sphere3DView>
   void initState() {
     super.initState();
     points = _generatePoints(widget.pointCount);
-    _controller =
-    AnimationController(vsync: this, duration: const Duration(seconds: 30))
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 30))
       ..repeat();
 
     _controller.addListener(() {
@@ -82,6 +82,7 @@ class _Sphere3DViewState extends State<Sphere3DView>
         rotationAngle: rotationAngle,
         highlightedIndices: widget.highlightedIndices,
         pointSize: widget.pointSize,
+        nameTextSize: widget.nameTextSize,
       ),
       child: Container(
         height: 250,
@@ -96,12 +97,14 @@ class Sphere3DPainter extends CustomPainter {
   final double rotationAngle;
   final List<int> highlightedIndices;
   final double pointSize;
+  final double nameTextSize;
 
   Sphere3DPainter({
     required this.points,
     required this.rotationAngle,
     required this.highlightedIndices,
     required this.pointSize,
+    required this.nameTextSize,
   });
 
   @override
@@ -109,15 +112,15 @@ class Sphere3DPainter extends CustomPainter {
     final radius = min(size.width, size.height) / 1.6;
     canvas.translate(size.width / 2, size.height / 1.2);
 
-    // Texto central RestoZen+
+    // Texto central
     final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'RestoZen',
+      text: TextSpan(
+        text: 'RestoZenic',
         style: TextStyle(
-          fontSize: 20,
+          fontSize: nameTextSize,
           fontWeight: FontWeight.bold,
-          color: Color(0xFFAFADBC),
-          shadows: [
+          color: const Color(0xFFAFADBC),
+          shadows: const [
             Shadow(
               blurRadius: 15,
               color: Colors.black,
@@ -139,24 +142,19 @@ class Sphere3DPainter extends CustomPainter {
     for (int i = 0; i < points.length; i++) {
       final point = points[i];
 
-      // Rotación en eje Z
-      final rotatedX =
-          point.x * cos(rotationAngle) - point.z * sin(rotationAngle);
-      final rotatedZ =
-          point.x * sin(rotationAngle) + point.z * cos(rotationAngle);
+      final rotatedX = point.x * cos(rotationAngle) - point.z * sin(rotationAngle);
+      final rotatedZ = point.x * sin(rotationAngle) + point.z * cos(rotationAngle);
 
       final screenX = rotatedX * radius;
       final screenY = point.y * radius;
 
-      // Perspectiva (usada para tamaño y opacidad)
       final perspective = (1 - rotatedZ) / 2;
 
       final isHighlighted = highlightedIndices.contains(i);
       final position = Offset(screenX, screenY);
 
       if (isHighlighted) {
-        _drawGlowingStar(
-            canvas, position, pointSize, perspective, rotationAngle + i);
+        _drawGlowingStar(canvas, position, pointSize, perspective, rotationAngle + i);
       } else {
         final baseSize = pointSize * 1.2;
         final visualSize = baseSize * (0.8 + perspective * 0.4);
@@ -218,13 +216,7 @@ class Sphere3DPainter extends CustomPainter {
     _drawStarRays(canvas, position, size, individualRotation);
   }
 
-  void _drawStarRays(
-      Canvas canvas, Offset center, double size, double rotation) {
-    final _ = Paint()
-      ..color = Colors.green.withOpacity(0.7)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
-
+  void _drawStarRays(Canvas canvas, Offset center, double size, double rotation) {
     for (int i = 0; i < 4; i++) {
       final angle = (i * pi / 2) + rotation * 0.5;
       final rayLength = size * 2.5;
@@ -233,9 +225,9 @@ class Sphere3DPainter extends CustomPainter {
       final endX = center.dx + cos(angle) * rayLength;
       final endY = center.dy + sin(angle) * rayLength;
 
-      final rayPath = Path();
-      rayPath.moveTo(center.dx, center.dy);
-      rayPath.lineTo(endX, endY);
+      final rayPath = Path()
+        ..moveTo(center.dx, center.dy)
+        ..lineTo(endX, endY);
 
       canvas.drawPath(
         rayPath,
@@ -256,9 +248,9 @@ class Sphere3DPainter extends CustomPainter {
       final endX = center.dx + cos(angle) * rayLength;
       final endY = center.dy + sin(angle) * rayLength;
 
-      final rayPath = Path();
-      rayPath.moveTo(center.dx, center.dy);
-      rayPath.lineTo(endX, endY);
+      final rayPath = Path()
+        ..moveTo(center.dx, center.dy)
+        ..lineTo(endX, endY);
 
       canvas.drawPath(
         rayPath,
