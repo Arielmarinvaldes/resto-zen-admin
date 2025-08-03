@@ -18,7 +18,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../utils/version_checker_service.dart'; // Ajusta el path si es necesario
 
 
-final String _appVersion = '1.3.8'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.3.9'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
