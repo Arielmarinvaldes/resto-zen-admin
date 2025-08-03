@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as http;
 import '../../utils/mensajes.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,11 +14,11 @@ import 'package:open_file/open_file.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:admin_restozen/widgets/sphere_3d_view.dart';
-
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../utils/version_checker_service.dart'; // Ajusta el path si es necesario
 
 
-final String _appVersion = '1.2.7'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.3.8'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController passCtrl = TextEditingController();
   List<int> highlightedIndices = [];
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
 
   bool loading = false;
@@ -38,14 +40,130 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _inicializarNotificacionesLocales();
+    // Inicializar notificaciones
+    _inicializarFirebaseMessaging();
     VersionCheckerService.startPeriodicCheck(context);
+
     Future.microtask(() async {
       await _esperarFirebaseConexion();
       await _loadRestaurantIndices();
-
-      // Comprobación inicial
       await _checkForUpdates();
     });
+  }
+
+  // ✅ NUEVO: Método para inicializar notificaciones locales
+  Future<void> _inicializarNotificacionesLocales() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Aquí puedes manejar cuando el usuario toca la notificación
+        print("📱 Usuario tocó la notificación: ${response.payload}");
+      },
+    );
+
+    // Crear canal de notificación para Android
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'admin_alerts_channel',
+      'Alertas de Administrador',
+      description: 'Notificaciones para alertas administrativas',
+      importance: Importance.high,
+      playSound: true,
+    );
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
+
+  // ✅ CORREGIDO: Firebase Messaging con manejo correcto del context
+  void _inicializarFirebaseMessaging() async {
+    final messaging = FirebaseMessaging.instance;
+
+    // Solicitar permisos
+    await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    String? token = await messaging.getToken();
+    print("🔑 Token FCM: $token");
+
+    // ✅ CORREGIDO: Listener de foreground con protección de context
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("📥 Notificación en primer plano recibida");
+
+      if (message.notification != null) {
+        print("📩 Título: ${message.notification!.title}");
+        print("📩 Cuerpo: ${message.notification!.body}");
+
+        // ✅ MOSTRAR NOTIFICACIÓN LOCAL (visual)
+        _mostrarNotificacionLocal(
+          message.notification!.title ?? "Notificación",
+          message.notification!.body ?? "",
+        );
+
+        // ✅ PROTECCIÓN CORRECTA: Verificar mounted ANTES de usar context
+        if (mounted) {
+          mostrarMensaje(
+            context,
+            message.notification!.title ?? "Notificación",
+            MessageType.success,
+          );
+        } else {
+          print("⚠️ Widget desmontado - no se puede mostrar mensaje en UI");
+        }
+      } else {
+        print("⚠️ Notificación sin contenido visible");
+      }
+    });
+
+    // Background y terminated
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("📲 Usuario abrió la notificación");
+      // Manejar navegación aquí si es necesario
+    });
+  }
+
+  // ✅ NUEVO: Método para mostrar notificación local (visual)
+  Future<void> _mostrarNotificacionLocal(String titulo, String cuerpo) async {
+    try {
+      const AndroidNotificationDetails androidNotificationDetails = AndroidNotificationDetails(
+        'admin_alerts_channel',
+        'Alertas de Administrador',
+        channelDescription: 'Notificaciones para alertas administrativas',
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        autoCancel: true,
+        styleInformation: BigTextStyleInformation(''),
+      );
+
+      const NotificationDetails notificationDetails = NotificationDetails(
+        android: androidNotificationDetails,
+      );
+
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000, // ID único
+        titulo,
+        cuerpo,
+        notificationDetails,
+        payload: 'admin_alert',
+      );
+
+      print("✅ Notificación local mostrada exitosamente");
+    } catch (e) {
+      print("❌ Error al mostrar notificación local: $e");
+    }
   }
 
   Future<void> _esperarFirebaseConexion() async {
@@ -72,11 +190,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _requestNotificationPermissions() async {
     await FirebaseMessaging.instance.requestPermission();
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission();
+
+    print('🔔 Permiso otorgado: ${settings.authorizationStatus}');
+
   }
 
-  Future<void> _subscribeToAdminTopic() async {
-    await FirebaseMessaging.instance.subscribeToTopic('pending_approvals');
-  }
+  //Future<void> _subscribeToAdminTopic() async {
+  //  await FirebaseMessaging.instance.subscribeToTopic('pending_approvals');
+  //}
 
   Future<void> login() async {
     setState(() {
@@ -89,7 +211,11 @@ class _LoginScreenState extends State<LoginScreen> {
         password: passCtrl.text.trim(),
       );
       await _requestNotificationPermissions();
-      await _subscribeToAdminTopic();
+
+      // await _subscribeToAdminTopic();
+
+      // ✅ SUSCRIBIR AL ADMIN AL TOPIC DE ALERTAS
+      await FirebaseMessaging.instance.subscribeToTopic("admin-alerts");
       await _loadRestaurantIndices(); // ✅ AÑADIDO AQUÍ
 
       if (!mounted) return;

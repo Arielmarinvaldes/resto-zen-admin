@@ -442,25 +442,83 @@ class _AdminScreenState extends State<AdminScreen> {
                           builder: (ctx) {
                             String? selected = data['plan'] ?? 'basic';
                             return AlertDialog(
-                              title: const Text("Seleccionar Plan"),
+                              title: Row(
+                                children: const [
+                                  Icon(Icons.star, color: Colors.amber),
+                                  SizedBox(width: 8),
+                                  Text("Seleccionar Plan"),
+                                ],
+                              ),
                               content: StatefulBuilder(
-                                builder: (context, setState) => Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: ['basic', 'pro', 'premium'].map((plan) {
-                                    return RadioListTile<String>(
-                                      title: Text(plan),
-                                      value: plan,
-                                      groupValue: selected,
-                                      onChanged: (value) {
-                                        setState(() => selected = value!);
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
+                                builder: (context, setState) {
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      RadioListTile<String>(
+                                        value: 'basic',
+                                        groupValue: selected,
+                                        title: Row(
+                                          children: const [
+                                            Icon(Icons.star_border, color: Colors.grey),
+                                            SizedBox(width: 8),
+                                            Text('Basic'),
+                                          ],
+                                        ),
+                                        onChanged: (value) => setState(() => selected = value),
+                                      ),
+                                      RadioListTile<String>(
+                                        value: 'pro',
+                                        groupValue: selected,
+                                        title: Row(
+                                          children: const [
+                                            Icon(Icons.star_border, color: Colors.amber),
+                                            SizedBox(width: 8),
+                                            Text('Pro'),
+                                          ],
+                                        ),
+                                        onChanged: (value) => setState(() => selected = value),
+                                      ),
+                                      RadioListTile<String>(
+                                        value: 'premium',
+                                        groupValue: selected,
+                                        title: Row(
+                                          children: const [
+                                            Icon(Icons.star, color: Colors.amber),
+                                            SizedBox(width: 8),
+                                            Text('Premium'),
+                                          ],
+                                        ),
+                                        onChanged: (value) => setState(() => selected = value),
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
-                                TextButton(onPressed: () => Navigator.pop(ctx, selected), child: const Text("Guardar")),
+                                TextButton.icon(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                  label: const Text("Cancelar"),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF1F1C2C), Color(0xFF928DAB)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => Navigator.pop(ctx, selected),
+                                    icon: const Icon(Icons.save, color: Colors.white),
+                                    label: const Text("Guardar", style: TextStyle(color: Colors.white)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                  ),
+                                ),
                               ],
                             );
                           },
@@ -470,14 +528,78 @@ class _AdminScreenState extends State<AdminScreen> {
                           await restaurantsRef.doc(docId).update({"plan": selectedPlan});
                         }
                       }
+                      else if (value == "delete") {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text("Confirmar eliminación"),
+                            content: const Text("¿Estás seguro de que deseas eliminar esta cuenta de restaurante? Esta acción no se puede deshacer."),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
+                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Eliminar")),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          await restaurantsRef.doc(docId).delete();
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("✅ Cuenta eliminada correctamente.")),
+                            );
+                          }
+                        }
+                      }
                     },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(value: "approve", child: Text(t('approve'))),
-                      PopupMenuItem(value: "reject", child: Text(t('reject'))),
-                      PopupMenuItem(value: "toggleRole", child: Text(t('toggleRole'))),
-                      const PopupMenuDivider(),
-                      const PopupMenuItem(value: "editPlan", child: Text("Editar plan")),
-                    ],
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: "approve",
+                          child: ListTile(
+                            leading: Icon(Icons.check_circle, color: Colors.green),
+                            title: Text(t('approve')),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: "reject",
+                          child: ListTile(
+                            leading: Icon(Icons.cancel, color: Colors.orange),
+                            title: Text(t('reject')),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: "toggleRole",
+                          child: ListTile(
+                            leading: Icon(Icons.swap_horiz, color: Colors.blueGrey),
+                            title: Text(t('toggleRole')),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: "editPlan",
+                          child: ListTile(
+                            leading: Icon(Icons.star, color: Colors.amber),
+                            title: Text("Editar plan"),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: "delete",
+                          child: ListTile(
+                            leading: Icon(Icons.delete_forever, color: Colors.redAccent),
+                            title: Text("Eliminar cuenta"),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ]
+
                   )
               ],
             ),
