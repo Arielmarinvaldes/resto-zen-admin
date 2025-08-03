@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class VersionCheckerService {
-  static const String _currentVersion = '1.3.9';
+  static const String _currentVersion = '1.4.0';
   static const String _versionUrl = 'https://raw.githubusercontent.com/Arielmarinvaldes/resto-zen-admin/master/version.json';
 
   static Timer? _timer;

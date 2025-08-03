@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/http.dart' as http;
 import '../../utils/mensajes.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,7 +17,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../utils/version_checker_service.dart'; // Ajusta el path si es necesario
 
 
-final String _appVersion = '1.3.9'; // Actualízala manualmente cuando subas nueva versión
+final String _appVersion = '1.4.0'; // Actualízala manualmente cuando subas nueva versión
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
